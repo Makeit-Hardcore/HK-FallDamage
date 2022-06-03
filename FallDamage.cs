@@ -16,7 +16,7 @@ namespace FallDamage
         public bool ToggleButtonInsideMenu => throw new NotImplementedException();
 
         new public string GetName() => "FallDamage";
-        public override string GetVersion() => "0.1.0";
+        public override string GetVersion() => "0.2.0";
         public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
         {
             return new List<IMenuMod.MenuEntry>
