@@ -93,6 +93,9 @@
     <Reference Include="PlayMaker">
       <HintPath>$(HollowKnightRefs)/PlayMaker.dll</HintPath>
     </Reference>
+    <Reference Include="Satchel">
+      <HintPath>E:\Hollow Knight 1.5 Modded\hollow_knight_Data\Managed\Mods\Satchel\Satchel.dll</HintPath>
+    </Reference>
     <Reference Include="System.ComponentModel.Composition">
       <HintPath>$(HollowKnightRefs)/System.ComponentModel.Composition.dll</HintPath>
     </Reference>

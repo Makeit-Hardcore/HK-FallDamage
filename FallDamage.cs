@@ -6,51 +6,49 @@ using Modding;
 using UnityEngine;
 using HutongGames.PlayMaker;
 using HutongGames.PlayMaker.Actions;
+using Satchel;
+using Satchel.BetterMenus;
 
 namespace FallDamage
 {
-    public class FallDamage : Mod, IMenuMod
+    public class FallDamage : Mod, ICustomMenuMod, ITogglableMod
     {
         private static float HARDFALL_MIN = 1.1f;
         private static float HARDFALL_MAX = 8f;
         private static int   MAX_DAMAGE = 5;
         private static float HARDFALL_RANGE = HARDFALL_MAX - HARDFALL_MIN;
 
-        private bool modenabled = true;
-        private float falltimer = 0f;
-        private int damage = 0;
+        private Menu MenuRef;
         private int mode = 0;
 
-        public bool ToggleButtonInsideMenu => throw new NotImplementedException();
+        private float falltimer = 0f;
+        private int damage = 0;
+
+        public bool ToggleButtonInsideMenu => true;
 
         new public string GetName() => "FallDamage";
         public override string GetVersion() => "0.2.0";
-        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
+        public MenuScreen GetMenuScreen(MenuScreen modListMenu, ModToggleDelegates? modToggleDelegates)
         {
-            return new List<IMenuMod.MenuEntry>
+            if (MenuRef == null)
             {
-                new IMenuMod.MenuEntry
-                {
-                    Name = "Fall Damage Active",
-                    Description = null,
-                    Values = new string[]
-                    {
-                        "ON",
-                        "OFF"
-                    },
-                    Saver = opt => this.modenabled = opt switch
-                    {
-                        0 => true,
-                        1 => false,
-                        _ => throw new InvalidOperationException()
-                    },
-                    Loader = () => this.modenabled switch
-                    {
-                        true => 0,
-                        false => 1
-                    }
-                },
-            };
+                MenuRef = new Menu("FallDamage", new Element[]
+{
+                Blueprints.CreateToggle(
+                    modToggleDelegates.Value,
+                    "Mod Enabled",
+                    ""
+                ),
+                new HorizontalOption(
+                    "Mode Select",
+                    "",
+                    new string[]{"Regular","Glass Ankles"},
+                    (setting) => { mode = setting; },
+                    () => mode
+                )
+});
+            }
+            return MenuRef.GetMenuScreen(modListMenu);
         }
         public override void Initialize()
         {
@@ -60,7 +58,7 @@ namespace FallDamage
         {
             //Logs fall timer at the moment just before ground impact
             //if (HeroController.instance.fallTimer == 0f && falltimer > 0f) { Log(falltimer); }
-            if (modenabled && HeroController.instance.fallTimer == 0f && this.falltimer > 0f)
+            if (HeroController.instance.fallTimer == 0f && this.falltimer > 0f)
             {
                 Log("Fall detected!");
                 switch (mode)
@@ -80,7 +78,7 @@ namespace FallDamage
                         if (this.falltimer > HARDFALL_MIN/2)
                         {
                             damage = (int)Math.Min(Math.Ceiling(((this.falltimer - HARDFALL_MIN) / HARDFALL_RANGE) * (float)MAX_DAMAGE), MAX_DAMAGE);
-                            Log(damage);
+                            Log("GLASS" + damage);
                             //HurtHero(damage);
                         };
                         break;
@@ -98,11 +96,17 @@ namespace FallDamage
         {
             HeroController.instance.TakeDamage(null, GlobalEnums.CollisionSide.other, dmg, 1);
         }
+
+        public void Unload()
+        {
+            ModHooks.HeroUpdateHook -= OnHeroUpdate;
+            Log("Mod unloaded");
+        }
     }
 }
 
 //TODO: Implement reaction for hardfalls upon scene change that don't meet HARDFALL_MIN (ie Crossroads well drop)
-//TODO: Rewrite menu using Satchel Better Menus + add option for mode
+//TODO: Add global settings so menu settings are kept across files
 
 /*Falltimer max amounts:
  * Resting Grounds drop: 4.036
