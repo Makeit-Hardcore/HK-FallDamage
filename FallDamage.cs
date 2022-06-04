@@ -11,7 +11,7 @@ using Satchel.BetterMenus;
 
 namespace FallDamage
 {
-    public class FallDamage : Mod, ICustomMenuMod, ITogglableMod
+    public class FallDamage : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod, ITogglableMod
     {
         private static float HARDFALL_MIN = 1.1f;
         private static float HARDFALL_MAX = 8f;
@@ -19,12 +19,12 @@ namespace FallDamage
         private static float HARDFALL_RANGE = HARDFALL_MAX - HARDFALL_MIN;
 
         private Menu MenuRef;
-        private int mode = 0;
 
         private float falltimer = 0f;
         private int damage = 0;
 
         public bool ToggleButtonInsideMenu => true;
+        public static GlobalSettings GS { get; set; } = new GlobalSettings();
 
         new public string GetName() => "FallDamage";
         public override string GetVersion() => "0.2.0";
@@ -43,8 +43,8 @@ namespace FallDamage
                     "Mode Select",
                     "",
                     new string[]{"Regular","Glass Ankles"},
-                    (setting) => { mode = setting; },
-                    () => mode
+                    (setting) => { GS.mode = setting; },
+                    () => GS.mode
                 )
 });
             }
@@ -61,7 +61,7 @@ namespace FallDamage
             if (HeroController.instance.fallTimer == 0f && this.falltimer > 0f)
             {
                 Log("Fall detected!");
-                switch (mode)
+                switch (GS.mode)
                 {
                     //Regular mode
                     case 0:
@@ -102,6 +102,15 @@ namespace FallDamage
             ModHooks.HeroUpdateHook -= OnHeroUpdate;
             Log("Mod unloaded");
         }
+
+        public void OnLoadGlobal(GlobalSettings s) => GS = s;
+
+        public GlobalSettings OnSaveGlobal() => GS;
+    }
+
+    public class GlobalSettings
+    {
+        public int mode = 0;
     }
 }
 
