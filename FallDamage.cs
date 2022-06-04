@@ -58,7 +58,7 @@ namespace FallDamage
         {
             //Logs fall timer at the moment just before ground impact
             //if (HeroController.instance.fallTimer == 0f && falltimer > 0f) { Log(falltimer); }
-            if (HeroController.instance.fallTimer == 0f && this.falltimer > 0f)
+            if (HeroController.instance.fallTimer == 0f && this.falltimer > 0f && HeroController.instance.hero_state != ActorStates.airborne && !(HeroController.instance.cState.spellQuake))
             {
                 Log("Fall detected!");
                 switch (GS.mode)
@@ -75,7 +75,7 @@ namespace FallDamage
                     //Glass Ankles mode
                     //TODO: Add code to change the values of HARDFALL_MIN, MAX, RANGE, and MAX_DAMAGE based on mode change
                     case 1:
-                        if (this.falltimer > HARDFALL_MIN/2)
+                        if (this.falltimer > HARDFALL_MIN)
                         {
                             damage = (int)Math.Min(Math.Ceiling(((this.falltimer - HARDFALL_MIN) / HARDFALL_RANGE) * (float)MAX_DAMAGE), MAX_DAMAGE);
                             Log("GLASS" + damage);
@@ -115,7 +115,6 @@ namespace FallDamage
 }
 
 //TODO: Implement reaction for hardfalls upon scene change that don't meet HARDFALL_MIN (ie Crossroads well drop)
-//TODO: Add global settings so menu settings are kept across files
 
 /*Falltimer max amounts:
  * Resting Grounds drop: 4.036
