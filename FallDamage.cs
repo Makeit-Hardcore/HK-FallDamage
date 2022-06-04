@@ -13,11 +13,6 @@ namespace FallDamage
 {
     public class FallDamage : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod, ITogglableMod
     {
-        private static float HARDFALL_MIN = 1.1f;
-        private static float HARDFALL_MAX = 8f;
-        private static int   MAX_DAMAGE = 5;
-        private static float HARDFALL_RANGE = HARDFALL_MAX - HARDFALL_MIN;
-
         private Menu MenuRef;
 
         private float falltimer = 0f;
@@ -43,7 +38,19 @@ namespace FallDamage
                     "Mode Select",
                     "",
                     new string[]{"Regular","Glass Ankles"},
-                    (setting) => { GS.mode = setting; },
+                    (setting) => {
+                        GS.mode = setting;
+                        if (setting == 1) //GLASS ANKLES MODE
+                        {
+                            GS.HARDFALL_MIN = 0.55f;
+                            GS.HARDFALL_MAX = 4f;
+                        }
+                        else //REGULAR MODE
+                        {
+                            GS.HARDFALL_MIN = 1.1f;
+                            GS.HARDFALL_MAX = 6f;
+                        }
+                        },
                     () => GS.mode
                 )
 });
@@ -56,34 +63,14 @@ namespace FallDamage
         }
         private void OnHeroUpdate()
         {
-            //Logs fall timer at the moment just before ground impact
-            //if (HeroController.instance.fallTimer == 0f && falltimer > 0f) { Log(falltimer); }
-            if (HeroController.instance.fallTimer == 0f && this.falltimer > 0f && HeroController.instance.hero_state != ActorStates.airborne && !(HeroController.instance.cState.spellQuake))
+            if (HeroController.instance.fallTimer == 0f
+                && HeroController.instance.hero_state != ActorStates.airborne
+                && this.falltimer >= GS.HARDFALL_MIN
+                && !(HeroController.instance.cState.spellQuake))
             {
-                Log("Fall detected!");
-                switch (GS.mode)
-                {
-                    //Regular mode
-                    case 0:
-                        if (this.falltimer > HARDFALL_MIN)
-                        {
-                            damage = (int)Math.Min(Math.Ceiling(((this.falltimer - HARDFALL_MIN) / HARDFALL_RANGE) * (float)MAX_DAMAGE), MAX_DAMAGE);
-                            Log(damage);
-                            //HurtHero(damage);
-                        };
-                        break;
-                    //Glass Ankles mode
-                    //TODO: Add code to change the values of HARDFALL_MIN, MAX, RANGE, and MAX_DAMAGE based on mode change
-                    case 1:
-                        if (this.falltimer > HARDFALL_MIN)
-                        {
-                            damage = (int)Math.Min(Math.Ceiling(((this.falltimer - HARDFALL_MIN) / HARDFALL_RANGE) * (float)MAX_DAMAGE), MAX_DAMAGE);
-                            Log("GLASS" + damage);
-                            //HurtHero(damage);
-                        };
-                        break;
-                    default: throw new Exception("Tried to access a mode that does not exist!");
-                }
+                damage = (int)Math.Min(Math.Ceiling(((this.falltimer - GS.HARDFALL_MIN) / (GS.HARDFALL_MAX - GS.HARDFALL_MIN)) * (float)PlayerData.instance.maxHealthBase), PlayerData.instance.maxHealthBase);
+                Log(damage);
+                //HurtHero(damage);
             }
             this.falltimer = HeroController.instance.fallTimer;
 
@@ -111,10 +98,13 @@ namespace FallDamage
     public class GlobalSettings
     {
         public int mode = 0;
+        public float HARDFALL_MIN = 1.1f;
+        public float HARDFALL_MAX = 6f;
     }
 }
 
 //TODO: Implement reaction for hardfalls upon scene change that don't meet HARDFALL_MIN (ie Crossroads well drop)
+//BUG: Falling too fast through scene transition triggers damage
 
 /*Falltimer max amounts:
  * Resting Grounds drop: 4.036
