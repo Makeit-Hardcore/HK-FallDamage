@@ -13,16 +13,17 @@ namespace FallDamage
 {
     public class FallDamage : Mod, IGlobalSettings<GlobalSettings>, ICustomMenuMod, ITogglableMod
     {
+        private float falltimer = 0f;
         private Menu MenuRef;
 
-        private float falltimer = 0f;
-        private int damage = 0;
-
         public bool ToggleButtonInsideMenu => true;
+        
         public static GlobalSettings GS { get; set; } = new GlobalSettings();
 
         new public string GetName() => "FallDamage";
+
         public override string GetVersion() => "0.2.0";
+        
         public MenuScreen GetMenuScreen(MenuScreen modListMenu, ModToggleDelegates? modToggleDelegates)
         {
             if (MenuRef == null)
@@ -43,12 +44,12 @@ namespace FallDamage
                         if (setting == 1) //GLASS ANKLES MODE
                         {
                             GS.HARDFALL_MIN = 0.55f;
-                            GS.HARDFALL_MAX = 4f;
+                            GS.HARDFALL_MAX = 4.5f;
                         }
                         else //REGULAR MODE
                         {
                             GS.HARDFALL_MIN = 1.1f;
-                            GS.HARDFALL_MAX = 6f;
+                            GS.HARDFALL_MAX = 7f;
                         }
                         },
                     () => GS.mode
@@ -57,28 +58,30 @@ namespace FallDamage
             }
             return MenuRef.GetMenuScreen(modListMenu);
         }
+
         public override void Initialize()
         {
             ModHooks.HeroUpdateHook += OnHeroUpdate;
         }
+
         private void OnHeroUpdate()
         {
             if (HeroController.instance.fallTimer == 0f
+                && this.falltimer > 0
                 && HeroController.instance.hero_state != ActorStates.airborne
-                && this.falltimer >= GS.HARDFALL_MIN
-                && !(HeroController.instance.cState.spellQuake))
-            {
-                damage = (int)Math.Min(Math.Ceiling(((this.falltimer - GS.HARDFALL_MIN) / (GS.HARDFALL_MAX - GS.HARDFALL_MIN)) * (float)PlayerData.instance.maxHealthBase), PlayerData.instance.maxHealthBase);
-                Log(damage);
-                //HurtHero(damage);
-            }
+                && !HeroController.instance.cState.transitioning
+                && !HeroController.instance.cState.spellQuake)
+                {
+                if (this.falltimer >= GS.HARDFALL_MIN)
+                    { HurtHero((int)Math.Min(Math.Ceiling(((this.falltimer - GS.HARDFALL_MIN) / (GS.HARDFALL_MAX - GS.HARDFALL_MIN)) * (float)PlayerData.instance.maxHealthBase), PlayerData.instance.maxHealthBase));
+                } else if (HeroController.instance.hero_state == ActorStates.hard_landing) //Forced hard landings, ie Dirtmouth well drop
+                    { HurtHero(1);
+                };
+            };
+            
             this.falltimer = HeroController.instance.fallTimer;
-
-            /*if (HeroController.instance.hero_state == ActorStates.hard_landing && modenabled)
-            {
-                HeroController.instance.TakeDamage(null, GlobalEnums.CollisionSide.other, 1, 1);
-            }*/
         }
+
         private void HurtHero(int dmg)
         {
             HeroController.instance.TakeDamage(null, GlobalEnums.CollisionSide.other, dmg, 1);
@@ -103,9 +106,6 @@ namespace FallDamage
     }
 }
 
-//TODO: Implement reaction for hardfalls upon scene change that don't meet HARDFALL_MIN (ie Crossroads well drop)
-//BUG: Falling too fast through scene transition triggers damage
-
 /*Falltimer max amounts:
  * Resting Grounds drop: 4.036
  * King's Pass drop: 4.086
@@ -115,12 +115,4 @@ namespace FallDamage
  * Abyss full drop: 11.000
  * 
  * Built in BIG_FALL_TIME = 1.1
- * 
- * 1 DAMAGE:
- * Regular: BIG_FALL_TIME (HARDFALL_MIN)
- * Glass Ankles: HARDFALL_MIN/2
- * 
- * KILL LIMIT
- * Regular: 8.0 (HARDFALL_MAX)
- * Glass Ankles: HARDFALL_MAX/2
  */
