@@ -22,7 +22,7 @@ namespace FallDamage
 
         new public string GetName() => "FallDamage";
 
-        public override string GetVersion() => "0.2.0";
+        public override string GetVersion() => "1.1.0";
         
         public MenuScreen GetMenuScreen(MenuScreen modListMenu, ModToggleDelegates? modToggleDelegates)
         {
@@ -70,6 +70,8 @@ namespace FallDamage
                 && this.falltimer > 0
                 && HeroController.instance.hero_state != ActorStates.airborne
                 && !HeroController.instance.cState.transitioning
+                && !HeroController.instance.cState.bouncing
+                && !HeroController.instance.cState.shroomBouncing
                 && !HeroController.instance.cState.spellQuake)
                 {
                 if (this.falltimer >= GS.HARDFALL_MIN)
